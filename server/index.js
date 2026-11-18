@@ -11,7 +11,47 @@ const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 300 * 1024 * 1024 } });
 const PORT = Number(process.env.PORT || 8787);
 
-app.get("/api/health", (_req, res) => res.json({ ok: true, service: "stickmotion-render", ffmpeg: Boolean(ffmpegPath) }));
+app.get("/api/health", (_req, res) => res.json({ ok: true, service: "stickmotion-render", ffmpeg: Boolean(ffmpegPath), tts: Boolean(process.env.PIPER_TTS_URL) }));
+
+app.post("/api/tts", express.json({ limit: "64kb" }), async (req, res) => {
+  const text = String(req.body?.text || "").trim();
+  const voice = String(req.body?.voice || "").trim();
+  const lengthScale = Number(req.body?.length_scale ?? 1);
+  if (!text) return res.status(400).json({ error: "اكتب النص أولاً." });
+  if (text.length > 5000) return res.status(413).json({ error: "الحد الأقصى للنص هو 5000 حرف." });
+  if (!/^[a-zA-Z0-9_-]+$/.test(voice)) return res.status(400).json({ error: "اسم الصوت غير صالح." });
+  if (!Number.isFinite(lengthScale) || lengthScale < 0.7 || lengthScale > 1.43) {
+    return res.status(400).json({ error: "قيمة سرعة النطق غير صالحة." });
+  }
+  const endpoint = process.env.PIPER_TTS_URL || "http://127.0.0.1:5000/synthesize";
+  try {
+    const upstream = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, voice, length_scale: lengthScale }),
+      signal: AbortSignal.timeout(120000)
+    });
+    if (!upstream.ok) {
+      const detail = (await upstream.text()).slice(0, 1000);
+      return res.status(502).json({ error: "تعذر على Piper إنشاء الصوت. تحقق من الخادم واسم نموذج الصوت.", detail });
+    }
+    const contentType = upstream.headers.get("content-type") || "audio/wav";
+    if (!contentType.includes("audio")) return res.status(502).json({ error: "خادم Piper لم يُرجع ملفاً صوتياً." });
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Content-Disposition", 'attachment; filename="StickMotion_Narration.wav"');
+    const audio = Buffer.from(await upstream.arrayBuffer());
+    if (!audio.length) return res.status(502).json({ error: "ملف الصوت الناتج فارغ." });
+    res.send(audio);
+  } catch (error) {
+    const unavailable = error.cause?.code === "ECONNREFUSED" || error.name === "TimeoutError";
+    res.status(unavailable ? 503 : 502).json({
+      error: unavailable
+        ? "خادم Piper المحلي غير متصل. شغّله على المنفذ 5000 ثم حاول مجدداً."
+        : "حدث خطأ أثناء الاتصال بخادم Piper.",
+      detail: error.message
+    });
+  }
+});
 
 app.post("/api/render/mp4", upload.single("video"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "Missing recorded video. Send a WebM file in the 'video' field." });
