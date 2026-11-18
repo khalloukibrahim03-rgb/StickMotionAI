@@ -106,3 +106,21 @@ test("Piper proxy validates input, forwards synthesis and handles upstream error
   assert.equal(upstreamFailure.status, 502);
   assert.match((await upstreamFailure.json()).error, /Piper/);
 });
+
+test("Piper proxy rejects invalid voice names, speed values and oversized scripts", async () => {
+  const base = `http://127.0.0.1:${apiPort}`;
+  const send = payload => fetch(`${base}/api/tts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  const invalidVoice = await send({ text: "Hello", voice: "../unsafe-model", length_scale: 1 });
+  assert.equal(invalidVoice.status, 400);
+
+  const invalidSpeed = await send({ text: "Hello", voice: "en_US-ryan-high", length_scale: 2 });
+  assert.equal(invalidSpeed.status, 400);
+
+  const oversized = await send({ text: "x".repeat(5001), voice: "en_US-ryan-high", length_scale: 1 });
+  assert.equal(oversized.status, 413);
+});
