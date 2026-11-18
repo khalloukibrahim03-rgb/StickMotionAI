@@ -29,6 +29,7 @@ For a frontend-only preview, run `npm run dev`. Recording will produce a WebM fa
 ## Build
 
 ```bash
+npm test
 npm run build
 ```
 
@@ -43,5 +44,7 @@ MP4 export is real only when the app can reach the Express render API and FFmpeg
 - AI-assisted script-to-storyboard direction.
 - Character, world, animation, camera, and lighting studios.
 - English narration, Arabic/Darija subtitles, and natural sound effects.
-- Timeline editing and reliable H.264 MP4 rendering.
+- Editable scene timeline with per-scene movement, camera, lighting, duration, and Arabic subtitle controls.
+- Timeline scrubbing and Arabic subtitles rendered into the WebGL recording.
+- Unit tests for script parsing and timeline calculations, plus reliable H.264 MP4 rendering.
 - Prefer free and open-source components; never imply paid AI services are free.
