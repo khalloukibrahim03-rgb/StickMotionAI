@@ -2,10 +2,11 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { parseScript, normalizeDuration } from "./story-director.js";
 import { buildTimeline, updateScene, setAllDurations, getTimelineDuration, getSceneAtTime } from "./timeline.js";
+import { serializeProject, deserializeProject } from "./project-store.js";
 import "./style.css";
 
 const root = document.querySelector("#app");
-root.innerHTML = '<header><div class="brand">STICKMOTION <b>AI</b><small>CINEMATIC 3D FILM STUDIO</small></div><span id="status">جاهز</span></header><main><aside><h1>من النص إلى الفيلم</h1><p>اكتب كل مشهد في سطر مستقل.</p><textarea id="script">المشهد 1: البطل يمشي في النفق المظلم ويفكر في أخته المريضة.\nالمشهد 2: يسمع صوتاً غريباً ويبدأ بالركض نحو المصعد السري.\nالمشهد 3: تنطفئ أضواء District 9 بالكامل، فيتوقف البطل مصدوماً.</textarea><button id="analyse">تحليل المشاهد</button><div id="scenes"></div><div id="sceneEditor" class="scene-editor"><h2>محرر المشهد المحدد</h2><p id="selectedSceneName">اختر مشهداً لتعديله</p><label for="sceneMotion">الحركة</label><select id="sceneMotion"><option value="idle">ثابت</option><option value="walk">مشي</option><option value="run">ركض</option><option value="shock">صدمة</option></select><label for="sceneCamera">الكاميرا</label><select id="sceneCamera"><option value="wide">لقطة واسعة</option><option value="tracking">تتبع الحركة</option><option value="close">لقطة قريبة</option></select><label for="sceneLighting">الإضاءة</label><select id="sceneLighting"><option value="cinematic">سينمائية</option><option value="warm">دافئة</option><option value="blackout">انقطاع الضوء</option></select><label for="sceneDuration">مدة المشهد المحدد <b id="sceneDurationText">6 ث</b></label><input id="sceneDuration" type="range" min="3" max="12" value="6"><label for="sceneSubtitle">نص الترجمة</label><textarea id="sceneSubtitle" rows="2"></textarea></div><label>المدة الافتراضية لكل مشهد <b id="seconds">6 ث</b></label><input id="duration" type="range" min="3" max="12" value="6"><div class="actions"><button id="preview">معاينة الفيلم</button><button id="export" class="primary">إنشاء الفيلم وتصديره</button></div><div id="progress" hidden><span id="progressText">جاري التسجيل…</span><div class="bar"><i id="bar"></i></div></div><p class="note">تُسجّل المعاينة الحقيقية من WebGL. يتطلب MP4 تشغيل خادم FFmpeg.</p></aside><section><div class="camera" id="camera">CAM 01 · WIDE SHOT</div><div id="viewport"></div><div class="subtitle" id="subtitle">المدينة غارقة في الظلام…</div><div class="timeline"><i id="timeline"></i></div><input id="scrub" type="range" min="0" max="1000" value="0"><div class="time" id="time">00:00</div></section></main><footer>STICKMOTION AI · DEVELOPMENT BUILD</footer>';
+root.innerHTML = '<header><div class="brand">STICKMOTION <b>AI</b><small>CINEMATIC 3D FILM STUDIO</small></div><span id="status">جاهز</span></header><main><aside><h1>من النص إلى الفيلم</h1><p>اكتب كل مشهد في سطر مستقل.</p><textarea id="script">المشهد 1: البطل يمشي في النفق المظلم ويفكر في أخته المريضة.\nالمشهد 2: يسمع صوتاً غريباً ويبدأ بالركض نحو المصعد السري.\nالمشهد 3: تنطفئ أضواء District 9 بالكامل، فيتوقف البطل مصدوماً.</textarea><button id="analyse">تحليل المشاهد</button><div id="scenes"></div><div id="sceneEditor" class="scene-editor"><h2>محرر المشهد المحدد</h2><p id="selectedSceneName">اختر مشهداً لتعديله</p><label for="sceneMotion">الحركة</label><select id="sceneMotion"><option value="idle">ثابت</option><option value="walk">مشي</option><option value="run">ركض</option><option value="shock">صدمة</option></select><label for="sceneCamera">الكاميرا</label><select id="sceneCamera"><option value="wide">لقطة واسعة</option><option value="tracking">تتبع الحركة</option><option value="close">لقطة قريبة</option></select><label for="sceneLighting">الإضاءة</label><select id="sceneLighting"><option value="cinematic">سينمائية</option><option value="warm">دافئة</option><option value="blackout">انقطاع الضوء</option></select><label for="sceneDuration">مدة المشهد المحدد <b id="sceneDurationText">6 ث</b></label><input id="sceneDuration" type="range" min="3" max="12" value="6"><label for="sceneSubtitle">نص الترجمة</label><textarea id="sceneSubtitle" rows="2"></textarea></div><label>المدة الافتراضية لكل مشهد <b id="seconds">6 ث</b></label><input id="duration" type="range" min="3" max="12" value="6"><div class="actions"><button id="saveProject">حفظ المشروع</button><button id="loadProject">تحميل المشروع</button></div><div class="actions"><button id="preview">معاينة الفيلم</button><button id="export" class="primary">إنشاء الفيلم وتصديره</button></div><div id="progress" hidden><span id="progressText">جاري التسجيل…</span><div class="bar"><i id="bar"></i></div></div><p class="note">تُسجّل المعاينة الحقيقية من WebGL. يتطلب MP4 تشغيل خادم FFmpeg.</p></aside><section><div class="camera" id="camera">CAM 01 · WIDE SHOT</div><div id="viewport"></div><div class="subtitle" id="subtitle">المدينة غارقة في الظلام…</div><div class="timeline"><i id="timeline"></i></div><input id="scrub" type="range" min="0" max="1000" value="0"><div class="time" id="time">00:00</div></section></main><footer>STICKMOTION AI · DEVELOPMENT BUILD</footer>';
 
 const $ = id => document.getElementById(id);
 const viewport = $("viewport");
@@ -132,6 +133,29 @@ function playPreview(){
  if(elapsed>=total)elapsed=0;
  lastSceneId=null;playing=true;$("preview").textContent="إيقاف المعاينة";
 }
+function saveProject(){
+ try{
+  if(!clips.length)analyse();
+  const data=serializeProject({script:$("script").value,defaultDuration:seconds,scenes:clips});
+  localStorage.setItem("stickmotion.project.v1",data);
+  $("status").textContent="تم حفظ المشروع على هذا الجهاز";
+ }catch(error){$("status").textContent="تعذر حفظ المشروع";alert("لم نتمكن من حفظ المشروع في المتصفح: "+error.message);}
+}
+function loadProject(){
+ try{
+  const raw=localStorage.getItem("stickmotion.project.v1");
+  if(!raw){alert("لا يوجد مشروع محفوظ على هذا الجهاز بعد.");return;}
+  const project=deserializeProject(raw);
+  if(!project){alert("ملف المشروع غير صالح أو من إصدار غير مدعوم.");return;}
+  $("script").value=project.script;$("duration").value=project.defaultDuration;
+  seconds=project.defaultDuration;$("seconds").textContent=seconds+" ث";
+  clips=buildTimeline(parseScript(project.script),seconds);
+  for(const saved of project.scenes)clips=updateScene(clips,saved.id,saved);
+  total=getTimelineDuration(clips);selectedSceneId=clips[0]?.id??null;elapsed=0;lastSceneId=null;
+  renderSceneList();if(selectedSceneId!==null)selectScene(selectedSceneId);
+  $("status").textContent="تم تحميل المشروع";$("time").textContent="00:00 / "+total+" sec";
+ }catch(error){alert("تعذر تحميل المشروع: "+error.message);}
+}
 function download(blob,name){const u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),30000);}
 async function exportFilm(){
  if(!clips.length&&!analyse())return;
@@ -172,6 +196,8 @@ $("scrub").oninput=e=>{
  const frame=getSceneAtTime(clips,elapsed);if(frame){lastSceneId=frame.scene.id;selectScene(frame.scene.id);animateScene(frame.scene,frame.localTime);}
  $("timeline").style.width=(total?elapsed/total*100:0)+"%";$("time").textContent=Math.floor(elapsed)+" / "+total+" sec";
 };
+$("saveProject").onclick=saveProject;
+$("loadProject").onclick=loadProject;
 $("preview").onclick=playPreview;
 $("export").onclick=exportFilm;
 init();analyse();
