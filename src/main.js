@@ -85,22 +85,29 @@ function applySceneCamera(sceneData){
  controls.update();
 }
 function escapeText(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
-function animateScene(index,t){
- const text=clips[index].text.toLowerCase(),run=/run|running|يركض|يجري|الهروب/.test(text),shock=/shock|صدمة|مصدوم|خوف|انطف|انقطع/.test(text);
- const motion=run?1.0:shock?0:.48;
- arms[0].rotation.x=Math.sin(t*(run?13:7))*motion;arms[1].rotation.x=-arms[0].rotation.x;
+function animateScene(item,t){
+ const run=item.motion==="run",walk=item.motion==="walk",shock=item.motion==="shock";
+ const speed=run?13:walk?7:0,amount=run?1:walk?.48:0;
+ arms[0].rotation.x=speed?Math.sin(t*speed)*amount:0;arms[1].rotation.x=-arms[0].rotation.x;
  legs[0].rotation.x=-arms[0].rotation.x*.8;legs[1].rotation.x=arms[0].rotation.x*.8;
  arms[0].rotation.z=shock?.9:.12;arms[1].rotation.z=shock?-.9:-.12;
- actor.position.y=run?Math.abs(Math.sin(t*13))*.08:0;actor.position.z=run?-t*.25:0;
- light.intensity=shock?.12:2.4;
- $("camera").textContent="CAM "+String(index+1).padStart(2,"0")+" · "+(run?"ACTION TRACKING":shock?"EXTREME CLOSE-UP":"WIDE DOLLY SHOT");
- $("subtitle").textContent=clips[index].text;
+ actor.position.y=run?Math.abs(Math.sin(t*13))*.08:0;
+ actor.position.z=run?-Math.sin(t*13)*.18:walk?-Math.sin(t*7)*.08:0;
+ if(item.lighting==="blackout"){light.intensity=.08;scene.background.set(0x010208);}
+ else if(item.lighting==="warm"){light.intensity=2.8;light.color.set(0xffa65e);scene.background.set(0x17100c);}
+ else{light.intensity=2.4;light.color.set(0xffbd86);scene.background.set(0x070a11);}
+ const cameraName={wide:"WIDE SHOT",tracking:"ACTION TRACKING",close:"CLOSE-UP"}[item.camera];
+ $("camera").textContent="CAM "+String(item.id).padStart(2,"0")+" · "+cameraName;
+ $("subtitle").textContent=item.subtitle;
 }
 function loop(){
  requestAnimationFrame(loop);
- if(playing){elapsed+=1/60;const idx=Math.min(clips.length-1,Math.floor(elapsed/seconds));animateScene(idx,elapsed-idx*seconds);
- const pct=Math.min(100,elapsed/total*100);$("timeline").style.width=pct+"%";$("time").textContent=Math.floor(elapsed)+" / "+total+" sec";
- if(elapsed>=total){playing=false;if(recorder&&recorder.state!=="inactive")recorder.stop();}
+ if(playing){
+  elapsed+=1/60;
+  const frame=getSceneAtTime(clips,elapsed);
+  if(frame){if(frame.scene.id!==lastSceneId){lastSceneId=frame.scene.id;applySceneCamera(frame.scene);}animateScene(frame.scene,frame.localTime);}
+  const pct=Math.min(100,elapsed/total*100);$("timeline").style.width=pct+"%";$("time").textContent=Math.floor(elapsed)+" / "+total+" sec";
+  if(elapsed>=total){playing=false;if(recorder&&recorder.state!=="inactive")recorder.stop();}
  }
  controls.update();renderer.render(scene,camera);
 }
@@ -108,10 +115,10 @@ function download(blob,name){const u=URL.createObjectURL(blob),a=document.create
 async function exportFilm(){
  if(!clips.length&&!analyse())return;
  if(!renderer.domElement.captureStream||!window.MediaRecorder){alert("المتصفح لا يدعم تسجيل Canvas. استخدم Chrome أو Edge.");return;}
- seconds=normalizeDuration($("duration").value);total=clips.length*seconds;
+ total=getTimelineDuration(clips);
  if(!Number.isFinite(total)||total<=0){$("progressText").textContent="أدخل مشهداً واحداً على الأقل.";return;}
  $("export").disabled=true;$("progress").hidden=false;$("progressText").textContent="جاري تسجيل المشاهد ثلاثية الأبعاد…";$("bar").style.width="0%";
- elapsed=0;playing=true;chunks=[];
+ elapsed=0;lastSceneId=null;playing=true;chunks=[];
  const stream=renderer.domElement.captureStream(30);
  const mime=MediaRecorder.isTypeSupported("video/webm;codecs=vp9")?"video/webm;codecs=vp9":"video/webm";
  try{
@@ -131,7 +138,13 @@ async function exportFilm(){
 $("analyse").onclick=analyse;
 $("duration").oninput=e=>{
  seconds=normalizeDuration(e.target.value);$("seconds").textContent=seconds+" ث";
- if(clips.length){total=clips.length*seconds;$("time").textContent="00:00 / "+total+" sec";}
+ if(clips.length){clips=setAllDurations(clips,seconds);total=getTimelineDuration(clips);renderSceneList();if(selectedSceneId!==null)selectScene(selectedSceneId);$("time").textContent="00:00 / "+total+" sec";}
 };
+$("scenes").addEventListener("click",e=>{const card=e.target.closest("[data-scene-id]");if(card)selectScene(Number(card.dataset.sceneId));});
+$("sceneMotion").onchange=e=>updateSelectedScene({motion:e.target.value});
+$("sceneCamera").onchange=e=>updateSelectedScene({camera:e.target.value});
+$("sceneLighting").onchange=e=>updateSelectedScene({lighting:e.target.value});
+$("sceneDuration").oninput=e=>{const value=normalizeDuration(e.target.value);$("sceneDurationText").textContent=value+" ث";updateSelectedScene({duration:value});};
+$("sceneSubtitle").oninput=e=>updateSelectedScene({subtitle:e.target.value});
 $("export").onclick=exportFilm;
 init();analyse();
