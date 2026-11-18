@@ -6,11 +6,12 @@ Cinematic 3D Stickman Film Studio. Active implementation is on the `development`
 
 - Three.js scene with a procedural dark city environment.
 - Official Stickman visual direction: white spherical head, black body and limbs.
-- Script line parser that creates a simple scene list and assigns basic procedural movement from keywords.
+- Bilingual script parser and editable scene timeline with per-scene duration, movement, camera, lighting, and subtitle settings.
+- Timeline scrubbing and preview playback; Arabic subtitle text is drawn into the WebGL frame for recording.
 - Live camera, lighting, and character animation preview.
 - Browser recording of the actual WebGL canvas to WebM using MediaRecorder.
 - Express endpoint that converts an uploaded WebM recording into H.264 MP4 using FFmpeg.
-- GitHub Actions workflow that runs the Vite production build.
+- GitHub Actions workflow that runs unit tests and the Vite production build.
 
 ## Run locally
 
@@ -33,7 +34,7 @@ npm run build
 
 ## Important current limitations
 
-This is an early functional foundation, not a finished AI film studio. Scene parsing is rule-based, not an LLM-powered AI director. The current character and environment are procedural primitives. Voice generation, audio mixing, accurate speech/subtitle synchronization, a keyframe editor, persistent projects, and cloud rendering are not implemented yet.
+This is an early functional foundation, not a finished AI film studio. Scene parsing is rule-based, not an LLM-powered AI director. The current character and environment are procedural primitives. Voice generation, audio mixing, accurate speech/subtitle synchronization, a full keyframe curve editor, persistent projects, AI voice generation, and cloud rendering are not implemented yet.
 
 MP4 export is real only when the app can reach the Express render API and FFmpeg successfully converts the recorded WebM. Without that service, the app downloads a WebM preview and clearly reports that MP4 conversion was unavailable. Browser MediaRecorder and WebGL support depend on the browser and device.
 
