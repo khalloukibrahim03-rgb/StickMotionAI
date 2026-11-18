@@ -6,9 +6,9 @@ export function buildTimeline(scenes, defaultDuration = 6) {
   const duration = clampDuration(defaultDuration);
   return scenes.map(scene => {
     const text = scene.text.toLowerCase();
-    const motion = /run|running|يركض|يجري|الهروب/.test(text) ? "run"
+    const motion = /run|running|ركض|يركض|يجري|الهروب/.test(text) ? "run"
       : /shock|صدمة|مصدوم|خوف|انطف|انقطع/.test(text) ? "shock"
-      : /walk|walking|يمشي|يسير/.test(text) ? "walk" : "idle";
+      : /walk|walking|يمشي|مشي|يسير/.test(text) ? "walk" : "idle";
     return {
       ...scene,
       duration,
