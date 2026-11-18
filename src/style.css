@@ -10,3 +10,5 @@ select{width:100%;background:#090e18;color:#e7eaf2;border:1px solid #303b50;bord
 #scrub{position:absolute;z-index:3;bottom:20px;left:16px;right:16px;width:calc(100% - 32px);accent-color:#9b8af9}
 .timeline{pointer-events:none}.timeline #scrub{pointer-events:auto}
 @media(max-width:800px){aside{max-height:none}.scene-editor{gap:7px}}
+
+#subtitle{display:none}
