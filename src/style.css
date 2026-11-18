@@ -12,3 +12,10 @@ select{width:100%;background:#090e18;color:#e7eaf2;border:1px solid #303b50;bord
 @media(max-width:800px){aside{max-height:none}.scene-editor{gap:7px}}
 
 #subtitle{display:none}
+
+.tts-panel{display:flex;flex-direction:column;gap:8px;padding:13px;border:1px solid #4b4775;border-radius:10px;background:linear-gradient(145deg,#17172a,#101521)}
+.tts-panel h2{font-size:13px;margin:0;color:#d9d2ff}
+.tts-panel textarea{height:92px;min-height:76px}
+.tts-panel input[type=text]{width:100%;background:#090e18;color:#e7eaf2;border:1px solid #303b50;border-radius:8px;padding:9px;font:inherit;font-size:12px}
+.tts-panel small{font-size:10px;color:#8793a8;line-height:1.5}
+.tts-panel button{background:linear-gradient(110deg,#6555d8,#a14b9c)}
