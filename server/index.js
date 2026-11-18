@@ -22,7 +22,7 @@ app.post("/api/render/mp4", upload.single("video"), async (req, res) => {
   const output = path.join(dir, "movie.mp4");
   try {
     await writeFile(input, req.file.buffer);
-    const args = ["-y", "-i", input, "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p", "-movflags", "+faststart", output];
+    const args = ["-y", "-i", input, "-map", "0:v:0", "-map", "0:a:0?", "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", output];
     await new Promise((resolve, reject) => {
       const child = spawn(ffmpegPath, args, { stdio: ["ignore", "ignore", "pipe"] });
       let stderr = "";
