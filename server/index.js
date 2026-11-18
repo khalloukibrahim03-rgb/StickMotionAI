@@ -93,6 +93,16 @@ app.post("/api/render/mp4", upload.single("video"), async (req, res) => {
   }
 });
 
+// Serve the production Vite build when deployed as a single Render web service.
+const distDirectory = path.resolve("dist");
+app.use(express.static(distDirectory));
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api/")) return next();
+  res.sendFile(path.join(distDirectory, "index.html"), error => {
+    if (error) next(error);
+  });
+});
+
 app.use((error, _req, res, _next) => {
   if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
     return res.status(413).json({ error: "The WebM upload exceeds the 300 MB limit." });
