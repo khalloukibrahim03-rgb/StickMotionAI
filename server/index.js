@@ -8,7 +8,18 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 
 const app = express();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 300 * 1024 * 1024 } });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 300 * 1024 * 1024 },
+  fileFilter(_req, file, callback) {
+    if (String(file.mimetype || "").split(";")[0] !== "video/webm") {
+      const error = new Error("Upload a WebM video recording.");
+      error.status = 415;
+      return callback(error);
+    }
+    callback(null, true);
+  }
+});
 const PORT = Number(process.env.PORT || 8787);
 
 app.get("/api/health", (_req, res) => res.json({ ok: true, service: "stickmotion-render", ffmpeg: Boolean(ffmpegPath), ttsEndpoint: process.env.PIPER_TTS_URL || "http://127.0.0.1:5000/synthesize" }));
@@ -80,6 +91,14 @@ app.post("/api/render/mp4", upload.single("video"), async (req, res) => {
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
+});
+
+app.use((error, _req, res, _next) => {
+  if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
+    return res.status(413).json({ error: "The WebM upload exceeds the 300 MB limit." });
+  }
+  const status = Number.isInteger(error.status) && error.status >= 400 && error.status < 500 ? error.status : 500;
+  res.status(status).json({ error: status === 415 ? error.message : "Video upload failed.", detail: status === 500 ? error.message : undefined });
 });
 
 app.listen(PORT, "0.0.0.0", () => console.log(`StickMotion render API listening on ${PORT}`));
