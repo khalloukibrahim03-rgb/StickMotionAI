@@ -13,6 +13,7 @@ Cinematic 3D Stickman Film Studio. Active implementation is on the `development`
 - Live camera, lighting, and character animation preview.
 - Procedural scene-synchronized sound effects (footsteps, blackout impact, and shock whoosh), with no background music.
 - Import an MP3/WAV narration track and synchronize it from the start or current preview position; narration and sound effects are included in the browser recording when supported.
+- Optional local Piper TTS integration: enter script text, voice model ID, and speech speed to generate a WAV narration file without a paid cloud API. The generated WAV is loaded into the current session and downloaded separately.
 - Browser recording of the actual WebGL canvas and mixed audio to WebM using MediaRecorder.
 - Express endpoint that converts an uploaded WebM recording into H.264 MP4 using FFmpeg.
 - GitHub Actions workflow that runs unit tests and the Vite production build.
@@ -30,6 +31,19 @@ Open the Vite URL printed in the terminal (normally http://localhost:5173). The 
 
 For a frontend-only preview, run `npm run dev`. Recording will produce a WebM fallback if the FFmpeg API is not running.
 
+## Local Piper TTS setup
+
+The TTS button uses the Piper HTTP server running on the same computer as the StickMotion Express server. Install Piper and download a compatible voice model using the official Piper instructions, then start its HTTP server. For the current HTTP server interface, the default endpoint is `http://127.0.0.1:5000/synthesize`.
+
+If Piper listens elsewhere, set `PIPER_TTS_URL` before starting the StickMotion server, for example:
+
+```powershell
+$env:PIPER_TTS_URL="http://127.0.0.1:5000/synthesize"
+npm run server
+```
+
+The UI voice field must match a voice installed on the Piper server (for example `en_US-ryan-high`). Voice model downloads are separate and may be large. English is the example/default voice; Arabic generation requires installing a Piper model that actually supports Arabic. TTS runs locally only when this server is running on the same computer. A remote Render deployment cannot reach the user's own localhost Piper server automatically; no hosted TTS service is bundled.
+
 ## Build
 
 ```bash
@@ -39,7 +53,7 @@ npm run build
 
 ## Important current limitations
 
-This is an early functional foundation, not a finished AI film studio. Scene parsing is rule-based, not an LLM-powered AI director. The current character and environment are procedural primitives. AI voice generation (TTS) is not implemented: narration must currently be supplied as an MP3/WAV file. Procedural sound effects are illustrative synthesized effects, not recordings from a professional sound library. The narration file is loaded for the current browser session and is not embedded in the saved project. SRT export uses the scene subtitle text and scene durations; it does not transcribe narration automatically. A full keyframe curve editor, cloud-synced projects, and cloud rendering are also not implemented yet.
+This is an early functional foundation, not a finished AI film studio. Scene parsing is rule-based, not an LLM-powered AI director. The current character and environment are procedural primitives. AI voice generation is not hosted in the cloud. The optional TTS button connects to a separately installed local Piper HTTP server; without Piper running, users must import an MP3/WAV file as before. Procedural sound effects are illustrative synthesized effects, not recordings from a professional sound library. The narration file is loaded for the current browser session and is not embedded in the saved project. SRT export uses the scene subtitle text and scene durations; it does not transcribe narration automatically. A full keyframe curve editor, cloud-synced projects, and cloud rendering are also not implemented yet.
 
 MP4 export is real only when the app can reach the Express render API and FFmpeg successfully converts the recorded WebM. Without that service, the app downloads a WebM preview and clearly reports that MP4 conversion was unavailable. Browser MediaRecorder and WebGL support depend on the browser and device.
 
