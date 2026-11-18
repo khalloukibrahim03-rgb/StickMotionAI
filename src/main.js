@@ -50,9 +50,21 @@ function createSubtitleSprite(){
 }
 function setSubtitle(text){
  if(!subtitleContext)return;
- const ctx=subtitleContext;ctx.clearRect(0,0,1024,160);ctx.fillStyle="rgba(2,5,12,.84)";ctx.fillRect(18,12,988,136);
- ctx.direction=getTextDirection(text);ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#fff";ctx.font="bold 42px Arial";
- ctx.fillText(String(text||"").slice(0,180),512,80,930);subtitleTexture.needsUpdate=true;
+ const ctx=subtitleContext;ctx.clearRect(0,0,1024,160);ctx.fillStyle="rgba(2,5,12,.88)";ctx.fillRect(18,12,988,136);
+ const value=String(text||"").trim();
+ ctx.direction=getTextDirection(value);ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#fff";ctx.font="bold 38px Arial";
+ const words=value.split(/\\s+/).filter(Boolean),lines=[];let line="";
+ for(const word of words){
+  const candidate=line?line+" "+word:word;
+  if(line&&ctx.measureText(candidate).width>900){lines.push(line);line=word;}
+  else line=candidate;
+ }
+ if(line)lines.push(line);
+ if(lines.length>2){lines.length=2;lines[1]=lines[1].replace(/[.…]*$/,"")+"…";}
+ const visible=lines.length?lines:[""];
+ const positions=visible.length===1?[80]:[57,105];
+ visible.forEach((line,index)=>ctx.fillText(line,512,positions[index],920));
+ subtitleTexture.needsUpdate=true;
 }
 function resize(){if(!renderer)return;const w=viewport.clientWidth,h=viewport.clientHeight;camera.aspect=w/Math.max(1,h);camera.updateProjectionMatrix();renderer.setSize(w,Math.max(1,h),false);}
 function analyse(){
