@@ -35,7 +35,7 @@ npm run build
 
 ## Important current limitations
 
-This is an early functional foundation, not a finished AI film studio. Scene parsing is rule-based, not an LLM-powered AI director. The current character and environment are procedural primitives. Voice generation, audio mixing, accurate speech/subtitle synchronization, a full keyframe curve editor, persistent projects, AI voice generation, and cloud rendering are not implemented yet.
+This is an early functional foundation, not a finished AI film studio. Scene parsing is rule-based, not an LLM-powered AI director. The current character and environment are procedural primitives. AI voice generation, audio mixing, a full keyframe curve editor, persistent projects, and cloud rendering are not implemented yet.
 
 MP4 export is real only when the app can reach the Express render API and FFmpeg successfully converts the recorded WebM. Without that service, the app downloads a WebM preview and clearly reports that MP4 conversion was unavailable. Browser MediaRecorder and WebGL support depend on the browser and device.
 
@@ -44,7 +44,4 @@ MP4 export is real only when the app can reach the Express render API and FFmpeg
 - AI-assisted script-to-storyboard direction.
 - Character, world, animation, camera, and lighting studios.
 - English narration, Arabic/Darija subtitles, and natural sound effects.
-- Editable scene timeline with per-scene movement, camera, lighting, duration, and Arabic subtitle controls.
-- Timeline scrubbing and Arabic subtitles rendered into the WebGL recording.
-- Unit tests for script parsing and timeline calculations, plus reliable H.264 MP4 rendering.
 - Prefer free and open-source components; never imply paid AI services are free.
