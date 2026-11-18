@@ -129,7 +129,7 @@ function loop(){
   lastFrameTime=frameTime;
   const frame=getSceneAtTime(clips,elapsed);
   if(frame){if(frame.scene.id!==lastSceneId){lastSceneId=frame.scene.id;applySceneCamera(frame.scene);soundEngine.playScene(frame.scene);}animateScene(frame.scene,frame.localTime);}
-  const pct=Math.min(100,elapsed/total*100);$("timeline").style.width=pct+"%";$("time").textContent=Math.floor(elapsed)+" / "+total+" sec";
+  const pct=Math.min(100,elapsed/total*100);$("timeline").style.width=pct+"%";$("scrub").value=String(Math.round(pct*10));$("time").textContent=Math.floor(elapsed)+" / "+total+" sec";
   if(recorder){$("bar").style.width=pct+"%";$("progressText").textContent="جاري تسجيل الفيلم… "+Math.round(pct)+"%";}
   if(elapsed>=total){playing=false;lastFrameTime=null;soundEngine.stopNarration();if(recorder&&recorder.state!=="inactive")recorder.stop();$("preview").textContent="معاينة الفيلم";}
  }else{lastFrameTime=null;}
@@ -183,7 +183,6 @@ async function exportFilm(){
    ? " تنبيه: مدة التعليق "+narrationDuration.toFixed(1)+" ث مقابل "+total.toFixed(1)+" ث للفيلم."
    : "";
   $("progressText").textContent="جاري تجهيز التسجيل…"+durationNote;
-  soundEngine.playNarration(0);
   stream=renderer.domElement.captureStream(30);
   const audioTrack=soundEngine.getTrack()?.clone();
   if(audioTrack)stream.addTrack(audioTrack);
@@ -199,6 +198,8 @@ async function exportFilm(){
    $("export").disabled=false;$("preview").disabled=false;$("preview").textContent="معاينة الفيلم";recorder=null;
   };
   recorder.start(250);
+  // Start narration only after MediaRecorder is active so the opening audio is captured.
+  soundEngine.playNarration(0);
  }catch(err){playing=false;if(stream)stream.getTracks().forEach(track=>track.stop());$("export").disabled=false;$("preview").disabled=false;$("progressText").textContent="تعذر التسجيل: "+err.message;}
 }
 $("ttsSpeed").oninput=e=>$("ttsSpeedText").textContent=Number(e.target.value).toFixed(2)+"×";
