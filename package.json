@@ -8,7 +8,8 @@
     "server": "node server/index.js",
     "dev:full": "concurrently \"npm:server\" \"npm:dev\"",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test"
   },
   "dependencies": {
     "@vitejs/plugin-basic-ssl": "^1.2.0",
