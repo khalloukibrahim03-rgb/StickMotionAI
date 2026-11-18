@@ -3,6 +3,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { parseScript, normalizeDuration } from "./story-director.js";
 import { buildTimeline, updateScene, setAllDurations, getTimelineDuration, getSceneAtTime } from "./timeline.js";
 import { serializeProject, deserializeProject } from "./project-store.js";
+import { createSoundEngine } from "./audio-engine.js";
 import "./style.css";
 
 const root = document.querySelector("#app");
@@ -11,7 +12,7 @@ root.innerHTML = '<header><div class="brand">STICKMOTION <b>AI</b><small>CINEMAT
 const $ = id => document.getElementById(id);
 const viewport = $("viewport");
 let scene, camera, renderer, controls, actor, arms=[], legs=[], light;
-let clips=[], seconds=6, elapsed=0, total=0, playing=false, recorder, chunks=[], selectedSceneId=null, lastSceneId=null, subtitleContext=null, subtitleTexture=null;
+let clips=[], seconds=6, elapsed=0, total=0, playing=false, recorder, chunks=[], selectedSceneId=null, lastSceneId=null, subtitleContext=null, subtitleTexture=null, soundEngine;
 function makePivot(x,y,len,mat){
  const p=new THREE.Group();p.position.set(x,y,0);
  const mesh=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,len,14),mat);
@@ -19,6 +20,7 @@ function makePivot(x,y,len,mat){
  const joint=new THREE.Mesh(new THREE.SphereGeometry(.055,12,12),mat);joint.position.y=-len;p.add(joint);actor.add(p);return p;
 }
 function init(){
+ soundEngine=createSoundEngine();
  scene=new THREE.Scene();scene.background=new THREE.Color(0x070a11);scene.fog=new THREE.FogExp2(0x070a11,.025);
  camera=new THREE.PerspectiveCamera(42,1,.1,150);camera.position.set(4,3,7);
  renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;viewport.appendChild(renderer.domElement);
@@ -120,18 +122,20 @@ function loop(){
  if(playing){
   elapsed+=1/60;
   const frame=getSceneAtTime(clips,elapsed);
-  if(frame){if(frame.scene.id!==lastSceneId){lastSceneId=frame.scene.id;applySceneCamera(frame.scene);}animateScene(frame.scene,frame.localTime);}
+  if(frame){if(frame.scene.id!==lastSceneId){lastSceneId=frame.scene.id;applySceneCamera(frame.scene);soundEngine.playScene(frame.scene);}animateScene(frame.scene,frame.localTime);}
   const pct=Math.min(100,elapsed/total*100);$("timeline").style.width=pct+"%";$("time").textContent=Math.floor(elapsed)+" / "+total+" sec";
   if(elapsed>=total){playing=false;if(recorder&&recorder.state!=="inactive")recorder.stop();$("preview").textContent="معاينة الفيلم";}
  }
  controls.update();renderer.render(scene,camera);
 }
-function playPreview(){
+async function playPreview(){
  if(!clips.length&&!analyse())return;
  if(playing&&!recorder){playing=false;$("preview").textContent="معاينة الفيلم";return;}
  if(recorder)return;
  if(elapsed>=total)elapsed=0;
+ try{await soundEngine.start();}catch(error){$("status").textContent="الصوت غير متاح: "+error.message;return;}
  lastSceneId=null;playing=true;$("preview").textContent="إيقاف المعاينة";
+ const frame=getSceneAtTime(clips,elapsed);if(frame)soundEngine.playScene(frame.scene);
 }
 function saveProject(){
  try{
@@ -163,10 +167,15 @@ async function exportFilm(){
  total=getTimelineDuration(clips);
  if(!Number.isFinite(total)||total<=0){$("progressText").textContent="أدخل مشهداً واحداً على الأقل.";return;}
  $("export").disabled=true;$("preview").disabled=true;$("progress").hidden=false;$("progressText").textContent="جاري تسجيل المشاهد ثلاثية الأبعاد…";$("bar").style.width="0%";
- elapsed=0;lastSceneId=null;playing=true;chunks=[];
- const stream=renderer.domElement.captureStream(30);
+ elapsed=0;lastSceneId=null;playing=false;chunks=[];
+ let stream;
  const mime=MediaRecorder.isTypeSupported("video/webm;codecs=vp9")?"video/webm;codecs=vp9":"video/webm";
  try{
+  await soundEngine.start();
+  stream=renderer.domElement.captureStream(30);
+  const audioTrack=soundEngine.getTrack()?.clone();
+  if(audioTrack)stream.addTrack(audioTrack);
+  playing=true;
   recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8000000});
   recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
   recorder.onstop=async()=>{
@@ -178,7 +187,7 @@ async function exportFilm(){
    $("export").disabled=false;$("preview").disabled=false;$("preview").textContent="معاينة الفيلم";
   };
   recorder.start(250);
- }catch(err){playing=false;$("export").disabled=false;$("preview").disabled=false;$("progressText").textContent="تعذر التسجيل: "+err.message;}
+ }catch(err){playing=false;if(stream)stream.getTracks().forEach(track=>track.stop());$("export").disabled=false;$("preview").disabled=false;$("progressText").textContent="تعذر التسجيل: "+err.message;}
 }
 $("analyse").onclick=analyse;
 $("duration").oninput=e=>{
