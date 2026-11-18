@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { parseScript, normalizeDuration } from "./story-director.js";
 import "./style.css";
 
 const root = document.querySelector("#app");
@@ -34,8 +35,8 @@ function init(){
 }
 function resize(){if(!renderer)return;const w=viewport.clientWidth,h=viewport.clientHeight;camera.aspect=w/Math.max(1,h);camera.updateProjectionMatrix();renderer.setSize(w,Math.max(1,h),false);}
 function analyse(){
- clips=$("script").value.split(/\n+/).map(x=>x.trim()).filter(Boolean).slice(0,20).map((text,i)=>({text:text.replace(/^((scene|المشهد)\s*\d*\s*[:：-]?\s*)/i,""),id:i+1}));
- seconds=Number($("duration").value);total=clips.length*seconds;
+ clips=parseScript($("script").value);
+ seconds=normalizeDuration($("duration").value);total=clips.length*seconds;
  $("scenes").innerHTML=clips.map(s=>'<article><b>SCENE '+s.id+'</b><span>'+escapeText(s.text)+'</span></article>').join("");
  $("status").textContent=clips.length+" مشاهد جاهزة";
  $("time").textContent="00:00 / "+total+" sec";
@@ -65,7 +66,7 @@ function download(blob,name){const u=URL.createObjectURL(blob),a=document.create
 async function exportFilm(){
  if(!clips.length&&!analyse())return;
  if(!renderer.domElement.captureStream||!window.MediaRecorder){alert("المتصفح لا يدعم تسجيل Canvas. استخدم Chrome أو Edge.");return;}
- seconds=Number($("duration").value);total=clips.length*seconds;
+ seconds=normalizeDuration($("duration").value);total=clips.length*seconds;
  if(!Number.isFinite(total)||total<=0){$("progressText").textContent="أدخل مشهداً واحداً على الأقل.";return;}
  $("export").disabled=true;$("progress").hidden=false;$("progressText").textContent="جاري تسجيل المشاهد ثلاثية الأبعاد…";$("bar").style.width="0%";
  elapsed=0;playing=true;chunks=[];
@@ -87,7 +88,7 @@ async function exportFilm(){
 }
 $("analyse").onclick=analyse;
 $("duration").oninput=e=>{
- seconds=Number(e.target.value);$("seconds").textContent=seconds+" ث";
+ seconds=normalizeDuration(e.target.value);$("seconds").textContent=seconds+" ث";
  if(clips.length){total=clips.length*seconds;$("time").textContent="00:00 / "+total+" sec";}
 };
 $("export").onclick=exportFilm;
