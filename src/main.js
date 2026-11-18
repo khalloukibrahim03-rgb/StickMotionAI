@@ -15,7 +15,7 @@ root.innerHTML = '<header><div class="brand">STICKMOTION <b>AI</b><small>CINEMAT
 const $ = id => document.getElementById(id);
 const viewport = $("viewport");
 let scene, camera, renderer, controls, actor, headMesh, arms=[], legs=[], light;
-let clips=[], seconds=6, elapsed=0, total=0, playing=false, recorder, chunks=[], selectedSceneId=null, lastSceneId=null, subtitleContext=null, subtitleTexture=null, soundEngine;
+let clips=[], seconds=6, elapsed=0, total=0, recordingDuration=0, playing=false, recorder, chunks=[], selectedSceneId=null, lastSceneId=null, subtitleContext=null, subtitleTexture=null, soundEngine;
 function makePivot(x,y,len,mat){
  const p=new THREE.Group();p.position.set(x,y,0);
  const mesh=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,len,14),mat);
@@ -156,9 +156,9 @@ function loop(){
   lastFrameTime=frameTime;
   const frame=getSceneAtTime(clips,elapsed);
   if(frame){if(frame.scene.id!==lastSceneId){lastSceneId=frame.scene.id;applySceneCamera(frame.scene);soundEngine.playScene(frame.scene);}animateScene(frame.scene,frame.localTime);}
-  const pct=Math.min(100,elapsed/total*100);$("timeline").style.width=pct+"%";$("scrub").value=String(Math.round(pct*10));$("time").textContent=Math.floor(elapsed)+" / "+total+" sec";
+  const playbackTotal=recorder?recordingDuration:total;const pct=Math.min(100,elapsed/Math.max(0.001,playbackTotal)*100);$("timeline").style.width=Math.min(100,elapsed/Math.max(0.001,total)*100)+"%";$("scrub").value=String(Math.round(Math.min(100,elapsed/Math.max(0.001,total)*100)*10));$("time").textContent=Math.floor(elapsed)+" / "+playbackTotal.toFixed(1)+" sec";
   if(recorder){$("bar").style.width=pct+"%";$("progressText").textContent="جاري تسجيل الفيلم… "+Math.round(pct)+"%";}
-  if(elapsed>=total){playing=false;lastFrameTime=null;soundEngine.stopNarration();if(recorder&&recorder.state!=="inactive")recorder.stop();$("preview").textContent="معاينة الفيلم";}
+  if(elapsed>=playbackTotal){playing=false;lastFrameTime=null;soundEngine.stopNarration();if(recorder&&recorder.state!=="inactive")recorder.stop();$("preview").textContent="معاينة الفيلم";}
  }else{lastFrameTime=null;}
  controls.update();renderer.render(scene,camera);
 }
@@ -206,9 +206,12 @@ async function exportFilm(){
  try{
   await soundEngine.start();
   const narrationDuration=soundEngine.getNarrationDuration();
-  const durationNote=narrationDuration>0&&Math.abs(narrationDuration-total)>.5
-   ? " تنبيه: مدة التعليق "+narrationDuration.toFixed(1)+" ث مقابل "+total.toFixed(1)+" ث للفيلم."
-   : "";
+  recordingDuration=Math.max(total,narrationDuration);
+  const durationNote=narrationDuration>total+.5
+   ? " سيتم تمديد التسجيل إلى "+recordingDuration.toFixed(1)+" ث حتى لا ينقطع التعليق الصوتي."
+   : narrationDuration>0&&narrationDuration<total-.5
+    ? " التعليق الصوتي أقصر من الفيلم؛ سيستمر الفيديو بعد انتهائه."
+    : "";
   $("progressText").textContent="جاري تجهيز التسجيل…"+durationNote;
   stream=renderer.domElement.captureStream(30);
   const audioTrack=soundEngine.getTrack()?.clone();
@@ -222,12 +225,12 @@ async function exportFilm(){
    $("progressText").textContent="جاري تحويل التسجيل إلى MP4 عبر FFmpeg…";
    try{const form=new FormData();form.append("video",webm,"film.webm");const response=await fetch("/api/render/mp4",{method:"POST",body:form});if(!response.ok){let detail="خادم FFmpeg غير متاح أو فشل التحويل";try{const payload=await response.json();if(payload.error)detail=payload.error+(payload.detail?" — "+payload.detail:"");}catch{}throw new Error(detail);}const mp4=await response.blob();if(mp4.type!=="video/mp4"||mp4.size<10000)throw new Error("ملف MP4 غير صالح");download(mp4,"StickMotion_Film.mp4");$("progressText").textContent="تم إنشاء وتنزيل MP4 حقيقي.";$("bar").style.width="100%";}
    catch(err){download(webm,"StickMotion_Preview.webm");$("progressText").textContent="تم تنزيل WebM فقط. "+err.message;}
-   $("export").disabled=false;$("preview").disabled=false;$("preview").textContent="معاينة الفيلم";recorder=null;
+   $("export").disabled=false;$("preview").disabled=false;$("preview").textContent="معاينة الفيلم";recorder=null;recordingDuration=0;
   };
   recorder.start(250);
   // Start narration only after MediaRecorder is active so the opening audio is captured.
   soundEngine.playNarration(0);
- }catch(err){playing=false;if(stream)stream.getTracks().forEach(track=>track.stop());$("export").disabled=false;$("preview").disabled=false;$("progressText").textContent="تعذر التسجيل: "+err.message;}
+ }catch(err){playing=false;recordingDuration=0;if(stream)stream.getTracks().forEach(track=>track.stop());$("export").disabled=false;$("preview").disabled=false;$("progressText").textContent="تعذر التسجيل: "+err.message;}
 }
 $("ttsSpeed").oninput=e=>$("ttsSpeedText").textContent=Number(e.target.value).toFixed(2)+"×";
 $("generateTts").onclick=async()=>{
