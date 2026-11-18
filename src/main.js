@@ -3,7 +3,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import "./style.css";
 
 const root = document.querySelector("#app");
-root.innerHTML = '<header><div class="brand">STICKMOTION <b>AI</b><small>CINEMATIC 3D FILM STUDIO</small></div><span id="status">جاهز</span></header><main><aside><h1>من النص إلى الفيلم</h1><p>اكتب كل مشهد في سطر مستقل.</p><textarea id="script">المشهد 1: البطل يمشي في النفق المظلم ويفكر في أخته المريضة.\\nالمشهد 2: يسمع صوتاً غريباً ويبدأ بالركض نحو المصعد السري.\\nالمشهد 3: تنطفئ أضواء District 9 بالكامل، فيتوقف البطل مصدوماً.</textarea><button id="analyse">تحليل المشاهد</button><div id="scenes"></div><label>مدة المشهد <b id="seconds">6 ث</b></label><input id="duration" type="range" min="3" max="12" value="6"><button id="export" class="primary">إنشاء الفيلم وتصديره</button><div id="progress" hidden><span id="progressText">جاري التسجيل…</span><div class="bar"><i id="bar"></i></div></div><p class="note">تُسجّل المعاينة الحقيقية من WebGL. يتطلب MP4 تشغيل خادم FFmpeg.</p></aside><section><div class="camera" id="camera">CAM 01 · WIDE SHOT</div><div id="viewport"></div><div class="subtitle" id="subtitle">المدينة غارقة في الظلام…</div><div class="timeline"><i id="timeline"></i></div><div class="time" id="time">00:00</div></section></main><footer>STICKMOTION AI · DEVELOPMENT BUILD</footer>';
+root.innerHTML = '<header><div class="brand">STICKMOTION <b>AI</b><small>CINEMATIC 3D FILM STUDIO</small></div><span id="status">جاهز</span></header><main><aside><h1>من النص إلى الفيلم</h1><p>اكتب كل مشهد في سطر مستقل.</p><textarea id="script">المشهد 1: البطل يمشي في النفق المظلم ويفكر في أخته المريضة.\nالمشهد 2: يسمع صوتاً غريباً ويبدأ بالركض نحو المصعد السري.\nالمشهد 3: تنطفئ أضواء District 9 بالكامل، فيتوقف البطل مصدوماً.</textarea><button id="analyse">تحليل المشاهد</button><div id="scenes"></div><label>مدة المشهد <b id="seconds">6 ث</b></label><input id="duration" type="range" min="3" max="12" value="6"><button id="export" class="primary">إنشاء الفيلم وتصديره</button><div id="progress" hidden><span id="progressText">جاري التسجيل…</span><div class="bar"><i id="bar"></i></div></div><p class="note">تُسجّل المعاينة الحقيقية من WebGL. يتطلب MP4 تشغيل خادم FFmpeg.</p></aside><section><div class="camera" id="camera">CAM 01 · WIDE SHOT</div><div id="viewport"></div><div class="subtitle" id="subtitle">المدينة غارقة في الظلام…</div><div class="timeline"><i id="timeline"></i></div><div class="time" id="time">00:00</div></section></main><footer>STICKMOTION AI · DEVELOPMENT BUILD</footer>';
 
 const $ = id => document.getElementById(id);
 const viewport = $("viewport");
@@ -34,7 +34,7 @@ function init(){
 }
 function resize(){if(!renderer)return;const w=viewport.clientWidth,h=viewport.clientHeight;camera.aspect=w/Math.max(1,h);camera.updateProjectionMatrix();renderer.setSize(w,Math.max(1,h),false);}
 function analyse(){
- clips=$("script").value.split(/\\n+/).map(x=>x.trim()).filter(Boolean).slice(0,20).map((text,i)=>({text:text.replace(/^((scene|المشهد)\\s*\\d*\\s*[:：-]?\\s*)/i,""),id:i+1}));
+ clips=$("script").value.split(/\n+/).map(x=>x.trim()).filter(Boolean).slice(0,20).map((text,i)=>({text:text.replace(/^((scene|المشهد)\s*\d*\s*[:：-]?\s*)/i,""),id:i+1}));
  seconds=Number($("duration").value);total=clips.length*seconds;
  $("scenes").innerHTML=clips.map(s=>'<article><b>SCENE '+s.id+'</b><span>'+escapeText(s.text)+'</span></article>').join("");
  $("status").textContent=clips.length+" مشاهد جاهزة";
