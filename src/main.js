@@ -215,7 +215,7 @@ $("downloadSrt").onclick=()=>{
  if(!clips.length&&!analyse())return;
  const srt=buildSrt(clips);
  if(!srt){alert("لا توجد ترجمة في المشاهد لتصديرها.");return;}
- download(new Blob(["\\uFEFF",srt],{type:"text/plain;charset=utf-8"}),"StickMotion_Subtitles.srt");
+ download(new Blob([srt],{type:"text/plain;charset=utf-8"}),"StickMotion_Subtitles.srt");
  $("status").textContent="تم تنزيل ملف الترجمة SRT";
 };
 $("saveProject").onclick=saveProject;
