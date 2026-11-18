@@ -112,11 +112,15 @@ export function createSoundEngine() {
     stopNarration();
     const startAt = Math.max(0, Math.min(Number(offset) || 0, narrationBuffer.duration));
     if (startAt >= narrationBuffer.duration) return false;
-    narrationSource = context.createBufferSource();
-    narrationSource.buffer = narrationBuffer;
-    narrationSource.connect(master);
-    narrationSource.onended = () => { if (narrationSource) { narrationSource.disconnect(); narrationSource = null; } };
-    narrationSource.start(0, startAt);
+    const source = context.createBufferSource();
+    source.buffer = narrationBuffer;
+    source.connect(master);
+    narrationSource = source;
+    source.onended = () => {
+      source.disconnect();
+      if (narrationSource === source) narrationSource = null;
+    };
+    source.start(0, startAt);
     return true;
   }
 
