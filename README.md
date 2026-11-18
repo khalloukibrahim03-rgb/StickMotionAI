@@ -42,7 +42,7 @@ $env:PIPER_TTS_URL="http://127.0.0.1:5000/synthesize"
 npm run server
 ```
 
-The UI voice field must match a voice installed on the Piper server (for example `en_US-ryan-high`). Voice model downloads are separate and may be large. English is the example/default voice; Arabic generation requires installing a Piper model that actually supports Arabic. TTS runs locally only when this server is running on the same computer. A remote Render deployment cannot reach the user's own localhost Piper server automatically; no hosted TTS service is bundled.
+The UI voice field must match a voice installed on the Piper server. Examples include `en_US-ryan-high` for English and `ar_JO-kareem-medium` for Arabic (Jordanian Arabic, not Moroccan Darija). Piper's voice catalogue lists Arabic models and their model files; download both the `.onnx` file and its matching `.onnx.json` configuration. Voice model downloads are separate and may be large. Review each model's license before publishing generated narration. TTS runs locally only when this server is running on the same computer. A remote Render deployment cannot reach the user's own localhost Piper server automatically; no hosted TTS service is bundled.
 
 ## Build
 
