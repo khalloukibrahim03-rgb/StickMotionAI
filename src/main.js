@@ -5,12 +5,12 @@ import { buildTimeline, updateScene, setAllDurations, getTimelineDuration, getSc
 import "./style.css";
 
 const root = document.querySelector("#app");
-root.innerHTML = '<header><div class="brand">STICKMOTION <b>AI</b><small>CINEMATIC 3D FILM STUDIO</small></div><span id="status">جاهز</span></header><main><aside><h1>من النص إلى الفيلم</h1><p>اكتب كل مشهد في سطر مستقل.</p><textarea id="script">المشهد 1: البطل يمشي في النفق المظلم ويفكر في أخته المريضة.\nالمشهد 2: يسمع صوتاً غريباً ويبدأ بالركض نحو المصعد السري.\nالمشهد 3: تنطفئ أضواء District 9 بالكامل، فيتوقف البطل مصدوماً.</textarea><button id="analyse">تحليل المشاهد</button><div id="scenes"></div><div id="sceneEditor" class="scene-editor"><h2>محرر المشهد المحدد</h2><p id="selectedSceneName">اختر مشهداً لتعديله</p><label for="sceneMotion">الحركة</label><select id="sceneMotion"><option value="idle">ثابت</option><option value="walk">مشي</option><option value="run">ركض</option><option value="shock">صدمة</option></select><label for="sceneCamera">الكاميرا</label><select id="sceneCamera"><option value="wide">لقطة واسعة</option><option value="tracking">تتبع الحركة</option><option value="close">لقطة قريبة</option></select><label for="sceneLighting">الإضاءة</label><select id="sceneLighting"><option value="cinematic">سينمائية</option><option value="warm">دافئة</option><option value="blackout">انقطاع الضوء</option></select><label for="sceneDuration">مدة المشهد المحدد <b id="sceneDurationText">6 ث</b></label><input id="sceneDuration" type="range" min="3" max="12" value="6"><label for="sceneSubtitle">نص الترجمة</label><textarea id="sceneSubtitle" rows="2"></textarea></div><label>المدة الافتراضية لكل مشهد <b id="seconds">6 ث</b></label><input id="duration" type="range" min="3" max="12" value="6"><button id="export" class="primary">إنشاء الفيلم وتصديره</button><div id="progress" hidden><span id="progressText">جاري التسجيل…</span><div class="bar"><i id="bar"></i></div></div><p class="note">تُسجّل المعاينة الحقيقية من WebGL. يتطلب MP4 تشغيل خادم FFmpeg.</p></aside><section><div class="camera" id="camera">CAM 01 · WIDE SHOT</div><div id="viewport"></div><div class="subtitle" id="subtitle">المدينة غارقة في الظلام…</div><div class="timeline"><i id="timeline"></i></div><div class="time" id="time">00:00</div></section></main><footer>STICKMOTION AI · DEVELOPMENT BUILD</footer>';
+root.innerHTML = '<header><div class="brand">STICKMOTION <b>AI</b><small>CINEMATIC 3D FILM STUDIO</small></div><span id="status">جاهز</span></header><main><aside><h1>من النص إلى الفيلم</h1><p>اكتب كل مشهد في سطر مستقل.</p><textarea id="script">المشهد 1: البطل يمشي في النفق المظلم ويفكر في أخته المريضة.\nالمشهد 2: يسمع صوتاً غريباً ويبدأ بالركض نحو المصعد السري.\nالمشهد 3: تنطفئ أضواء District 9 بالكامل، فيتوقف البطل مصدوماً.</textarea><button id="analyse">تحليل المشاهد</button><div id="scenes"></div><div id="sceneEditor" class="scene-editor"><h2>محرر المشهد المحدد</h2><p id="selectedSceneName">اختر مشهداً لتعديله</p><label for="sceneMotion">الحركة</label><select id="sceneMotion"><option value="idle">ثابت</option><option value="walk">مشي</option><option value="run">ركض</option><option value="shock">صدمة</option></select><label for="sceneCamera">الكاميرا</label><select id="sceneCamera"><option value="wide">لقطة واسعة</option><option value="tracking">تتبع الحركة</option><option value="close">لقطة قريبة</option></select><label for="sceneLighting">الإضاءة</label><select id="sceneLighting"><option value="cinematic">سينمائية</option><option value="warm">دافئة</option><option value="blackout">انقطاع الضوء</option></select><label for="sceneDuration">مدة المشهد المحدد <b id="sceneDurationText">6 ث</b></label><input id="sceneDuration" type="range" min="3" max="12" value="6"><label for="sceneSubtitle">نص الترجمة</label><textarea id="sceneSubtitle" rows="2"></textarea></div><label>المدة الافتراضية لكل مشهد <b id="seconds">6 ث</b></label><input id="duration" type="range" min="3" max="12" value="6"><button id="export" class="primary">إنشاء الفيلم وتصديره</button><div id="progress" hidden><span id="progressText">جاري التسجيل…</span><div class="bar"><i id="bar"></i></div></div><p class="note">تُسجّل المعاينة الحقيقية من WebGL. يتطلب MP4 تشغيل خادم FFmpeg.</p></aside><section><div class="camera" id="camera">CAM 01 · WIDE SHOT</div><div id="viewport"></div><div class="subtitle" id="subtitle">المدينة غارقة في الظلام…</div><div class="timeline"><i id="timeline"></i></div><input id="scrub" type="range" min="0" max="1000" value="0"><div class="time" id="time">00:00</div></section></main><footer>STICKMOTION AI · DEVELOPMENT BUILD</footer>';
 
 const $ = id => document.getElementById(id);
 const viewport = $("viewport");
 let scene, camera, renderer, controls, actor, arms=[], legs=[], light;
-let clips=[], seconds=6, elapsed=0, total=0, playing=false, recorder, chunks=[], selectedSceneId=null, lastSceneId=null;
+let clips=[], seconds=6, elapsed=0, total=0, playing=false, recorder, chunks=[], selectedSceneId=null, lastSceneId=null, subtitleContext=null, subtitleTexture=null;
 function makePivot(x,y,len,mat){
  const p=new THREE.Group();p.position.set(x,y,0);
  const mesh=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,len,14),mat);
@@ -32,7 +32,21 @@ function init(){
  const body=new THREE.Mesh(new THREE.CylinderGeometry(.075,.09,.95,18),black);body.position.y=1.43;body.castShadow=true;actor.add(body);
  arms=[makePivot(-.18,1.82,.78,black),makePivot(.18,1.82,.78,black)];
  legs=[makePivot(-.09,.98,.86,black),makePivot(.09,.98,.86,black)];scene.add(actor);
+ createSubtitleSprite();
  resize();window.addEventListener("resize",resize);requestAnimationFrame(loop);
+}
+function createSubtitleSprite(){
+ const canvas=document.createElement("canvas");canvas.width=1024;canvas.height=160;
+ const ctx=canvas.getContext("2d");subtitleContext=ctx;subtitleTexture=new THREE.CanvasTexture(canvas);subtitleTexture.colorSpace=THREE.SRGBColorSpace;
+ const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:subtitleTexture,transparent:true,depthTest:false}));
+ sprite.position.set(0,-1.35,-4);sprite.scale.set(3.65,.57,1);sprite.renderOrder=1000;camera.add(sprite);scene.add(camera);
+ setSubtitle("");
+}
+function setSubtitle(text){
+ if(!subtitleContext)return;
+ const ctx=subtitleContext;ctx.clearRect(0,0,1024,160);ctx.fillStyle="rgba(2,5,12,.84)";ctx.fillRect(18,12,988,136);
+ ctx.direction="rtl";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#fff";ctx.font="bold 42px Arial";
+ ctx.fillText(String(text||"").slice(0,180),512,80,930);subtitleTexture.needsUpdate=true;
 }
 function resize(){if(!renderer)return;const w=viewport.clientWidth,h=viewport.clientHeight;camera.aspect=w/Math.max(1,h);camera.updateProjectionMatrix();renderer.setSize(w,Math.max(1,h),false);}
 function analyse(){
@@ -63,7 +77,7 @@ function selectScene(id){
  $("sceneSubtitle").value=selected.subtitle;
  renderSceneList();
  applySceneCamera(selected);
- $("subtitle").textContent=selected.subtitle;
+ setSubtitle(selected.subtitle);
 }
 function updateSelectedScene(patch){
  if(selectedSceneId===null)return;
@@ -73,7 +87,7 @@ function updateSelectedScene(patch){
  const selected=clips.find(scene=>scene.id===selectedSceneId);
  $("selectedSceneName").textContent="المشهد "+selected.id+" — "+selected.text;
  $("time").textContent="00:00 / "+total+" sec";
- $("subtitle").textContent=selected.subtitle;
+ setSubtitle(selected.subtitle);
  applySceneCamera(selected);
 }
 function applySceneCamera(sceneData){
@@ -98,7 +112,7 @@ function animateScene(item,t){
  else{light.intensity=2.4;light.color.set(0xffbd86);scene.background.set(0x070a11);}
  const cameraName={wide:"WIDE SHOT",tracking:"ACTION TRACKING",close:"CLOSE-UP"}[item.camera];
  $("camera").textContent="CAM "+String(item.id).padStart(2,"0")+" · "+cameraName;
- $("subtitle").textContent=item.subtitle;
+ setSubtitle(item.subtitle);
 }
 function loop(){
  requestAnimationFrame(loop);
@@ -146,5 +160,10 @@ $("sceneCamera").onchange=e=>updateSelectedScene({camera:e.target.value});
 $("sceneLighting").onchange=e=>updateSelectedScene({lighting:e.target.value});
 $("sceneDuration").oninput=e=>{const value=normalizeDuration(e.target.value);$("sceneDurationText").textContent=value+" ث";updateSelectedScene({duration:value});};
 $("sceneSubtitle").oninput=e=>updateSelectedScene({subtitle:e.target.value});
+$("scrub").oninput=e=>{
+ if(recorder)return;playing=false;elapsed=Number(e.target.value)/1000*total;
+ const frame=getSceneAtTime(clips,elapsed);if(frame){lastSceneId=frame.scene.id;selectScene(frame.scene.id);animateScene(frame.scene,frame.localTime);}
+ $("timeline").style.width=(total?elapsed/total*100:0)+"%";$("time").textContent=Math.floor(elapsed)+" / "+total+" sec";
+};
 $("export").onclick=exportFilm;
 init();analyse();
