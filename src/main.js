@@ -7,7 +7,7 @@ import { createSoundEngine } from "./audio-engine.js";
 import "./style.css";
 
 const root = document.querySelector("#app");
-root.innerHTML = '<header><div class="brand">STICKMOTION <b>AI</b><small>CINEMATIC 3D FILM STUDIO</small></div><span id="status">جاهز</span></header><main><aside><h1>من النص إلى الفيلم</h1><p>اكتب كل مشهد في سطر مستقل.</p><textarea id="script">المشهد 1: البطل يمشي في النفق المظلم ويفكر في أخته المريضة.\nالمشهد 2: يسمع صوتاً غريباً ويبدأ بالركض نحو المصعد السري.\nالمشهد 3: تنطفئ أضواء District 9 بالكامل، فيتوقف البطل مصدوماً.</textarea><button id="analyse">تحليل المشاهد</button><div id="scenes"></div><div id="sceneEditor" class="scene-editor"><h2>محرر المشهد المحدد</h2><p id="selectedSceneName">اختر مشهداً لتعديله</p><label for="sceneMotion">الحركة</label><select id="sceneMotion"><option value="idle">ثابت</option><option value="walk">مشي</option><option value="run">ركض</option><option value="shock">صدمة</option></select><label for="sceneCamera">الكاميرا</label><select id="sceneCamera"><option value="wide">لقطة واسعة</option><option value="tracking">تتبع الحركة</option><option value="close">لقطة قريبة</option></select><label for="sceneLighting">الإضاءة</label><select id="sceneLighting"><option value="cinematic">سينمائية</option><option value="warm">دافئة</option><option value="blackout">انقطاع الضوء</option></select><label for="sceneDuration">مدة المشهد المحدد <b id="sceneDurationText">6 ث</b></label><input id="sceneDuration" type="range" min="3" max="12" value="6"><label for="sceneSubtitle">نص الترجمة</label><textarea id="sceneSubtitle" rows="2"></textarea></div><label>المدة الافتراضية لكل مشهد <b id="seconds">6 ث</b></label><input id="duration" type="range" min="3" max="12" value="6"><div class="actions"><button id="saveProject">حفظ المشروع</button><button id="loadProject">تحميل المشروع</button></div><div class="actions"><button id="preview">معاينة الفيلم</button><button id="export" class="primary">إنشاء الفيلم وتصديره</button></div><div id="progress" hidden><span id="progressText">جاري التسجيل…</span><div class="bar"><i id="bar"></i></div></div><p class="note">تُسجّل المعاينة الحقيقية من WebGL. يتطلب MP4 تشغيل خادم FFmpeg.</p></aside><section><div class="camera" id="camera">CAM 01 · WIDE SHOT</div><div id="viewport"></div><div class="subtitle" id="subtitle">المدينة غارقة في الظلام…</div><div class="timeline"><i id="timeline"></i></div><input id="scrub" type="range" min="0" max="1000" value="0"><div class="time" id="time">00:00</div></section></main><footer>STICKMOTION AI · DEVELOPMENT BUILD</footer>';
+root.innerHTML = '<header><div class="brand">STICKMOTION <b>AI</b><small>CINEMATIC 3D FILM STUDIO</small></div><span id="status">جاهز</span></header><main><aside><h1>من النص إلى الفيلم</h1><p>اكتب كل مشهد في سطر مستقل.</p><textarea id="script">المشهد 1: البطل يمشي في النفق المظلم ويفكر في أخته المريضة.\nالمشهد 2: يسمع صوتاً غريباً ويبدأ بالركض نحو المصعد السري.\nالمشهد 3: تنطفئ أضواء District 9 بالكامل، فيتوقف البطل مصدوماً.</textarea><button id="analyse">تحليل المشاهد</button><div id="scenes"></div><div id="sceneEditor" class="scene-editor"><h2>محرر المشهد المحدد</h2><p id="selectedSceneName">اختر مشهداً لتعديله</p><label for="sceneMotion">الحركة</label><select id="sceneMotion"><option value="idle">ثابت</option><option value="walk">مشي</option><option value="run">ركض</option><option value="shock">صدمة</option></select><label for="sceneCamera">الكاميرا</label><select id="sceneCamera"><option value="wide">لقطة واسعة</option><option value="tracking">تتبع الحركة</option><option value="close">لقطة قريبة</option></select><label for="sceneLighting">الإضاءة</label><select id="sceneLighting"><option value="cinematic">سينمائية</option><option value="warm">دافئة</option><option value="blackout">انقطاع الضوء</option></select><label for="sceneDuration">مدة المشهد المحدد <b id="sceneDurationText">6 ث</b></label><input id="sceneDuration" type="range" min="3" max="12" value="6"><label for="sceneSubtitle">نص الترجمة</label><textarea id="sceneSubtitle" rows="2"></textarea></div><label for="narrationFile">التعليق الصوتي (MP3 / WAV)</label><input id="narrationFile" type="file" accept="audio/*"><small>حمّل تسجيلاً صوتياً أو ملف TTS ليُزامن مع الفيلم.</small><label>المدة الافتراضية لكل مشهد <b id="seconds">6 ث</b></label><input id="duration" type="range" min="3" max="12" value="6"><div class="actions"><button id="saveProject">حفظ المشروع</button><button id="loadProject">تحميل المشروع</button></div><div class="actions"><button id="preview">معاينة الفيلم</button><button id="export" class="primary">إنشاء الفيلم وتصديره</button></div><div id="progress" hidden><span id="progressText">جاري التسجيل…</span><div class="bar"><i id="bar"></i></div></div><p class="note">تُسجّل المعاينة الحقيقية من WebGL. يتطلب MP4 تشغيل خادم FFmpeg.</p></aside><section><div class="camera" id="camera">CAM 01 · WIDE SHOT</div><div id="viewport"></div><div class="subtitle" id="subtitle">المدينة غارقة في الظلام…</div><div class="timeline"><i id="timeline"></i></div><input id="scrub" type="range" min="0" max="1000" value="0"><div class="time" id="time">00:00</div></section></main><footer>STICKMOTION AI · DEVELOPMENT BUILD</footer>';
 
 const $ = id => document.getElementById(id);
 const viewport = $("viewport");
@@ -124,16 +124,16 @@ function loop(){
   const frame=getSceneAtTime(clips,elapsed);
   if(frame){if(frame.scene.id!==lastSceneId){lastSceneId=frame.scene.id;applySceneCamera(frame.scene);soundEngine.playScene(frame.scene);}animateScene(frame.scene,frame.localTime);}
   const pct=Math.min(100,elapsed/total*100);$("timeline").style.width=pct+"%";$("time").textContent=Math.floor(elapsed)+" / "+total+" sec";
-  if(elapsed>=total){playing=false;if(recorder&&recorder.state!=="inactive")recorder.stop();$("preview").textContent="معاينة الفيلم";}
+  if(elapsed>=total){playing=false;soundEngine.stopNarration();if(recorder&&recorder.state!=="inactive")recorder.stop();$("preview").textContent="معاينة الفيلم";}
  }
  controls.update();renderer.render(scene,camera);
 }
 async function playPreview(){
  if(!clips.length&&!analyse())return;
- if(playing&&!recorder){playing=false;$("preview").textContent="معاينة الفيلم";return;}
+ if(playing&&!recorder){playing=false;soundEngine.stopNarration();$("preview").textContent="معاينة الفيلم";return;}
  if(recorder)return;
  if(elapsed>=total)elapsed=0;
- try{await soundEngine.start();}catch(error){$("status").textContent="الصوت غير متاح: "+error.message;return;}
+ try{await soundEngine.start();soundEngine.playNarration(elapsed);}catch(error){$("status").textContent="الصوت غير متاح: "+error.message;return;}
  lastSceneId=null;playing=true;$("preview").textContent="إيقاف المعاينة";
 }
 function saveProject(){
@@ -171,6 +171,7 @@ async function exportFilm(){
  const mime=MediaRecorder.isTypeSupported("video/webm;codecs=vp9")?"video/webm;codecs=vp9":"video/webm";
  try{
   await soundEngine.start();
+  soundEngine.playNarration(0);
   stream=renderer.domElement.captureStream(30);
   const audioTrack=soundEngine.getTrack()?.clone();
   if(audioTrack)stream.addTrack(audioTrack);
@@ -178,7 +179,7 @@ async function exportFilm(){
   recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8000000});
   recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
   recorder.onstop=async()=>{
-   playing=false;stream.getTracks().forEach(t=>t.stop());const webm=new Blob(chunks,{type:"video/webm"});
+   playing=false;soundEngine.stopNarration();stream.getTracks().forEach(t=>t.stop());const webm=new Blob(chunks,{type:"video/webm"});
    if(webm.size<10000){$("progressText").textContent="فشل التسجيل: الملف الناتج فارغ.";$("export").disabled=false;$("preview").disabled=false;recorder=null;return;}
    $("progressText").textContent="جاري تحويل التسجيل إلى MP4 عبر FFmpeg…";
    try{const form=new FormData();form.append("video",webm,"film.webm");const response=await fetch("/api/render/mp4",{method:"POST",body:form});if(!response.ok)throw new Error("خادم FFmpeg غير متاح أو فشل التحويل");const mp4=await response.blob();if(mp4.type!=="video/mp4"||mp4.size<10000)throw new Error("ملف MP4 غير صالح");download(mp4,"StickMotion_Film.mp4");$("progressText").textContent="تم إنشاء وتنزيل MP4 حقيقي.";$("bar").style.width="100%";}
@@ -188,6 +189,11 @@ async function exportFilm(){
   recorder.start(250);
  }catch(err){playing=false;if(stream)stream.getTracks().forEach(track=>track.stop());$("export").disabled=false;$("preview").disabled=false;$("progressText").textContent="تعذر التسجيل: "+err.message;}
 }
+$("narrationFile").onchange=async e=>{
+ const file=e.target.files?.[0];if(!file)return;
+ try{const duration=await soundEngine.loadNarration(file);$("status").textContent="تم تحميل التعليق الصوتي · "+Math.round(duration)+" ثانية";}
+ catch(error){$("status").textContent="تعذر تحميل الصوت: "+error.message;e.target.value="";}
+};
 $("analyse").onclick=analyse;
 $("duration").oninput=e=>{
  seconds=normalizeDuration(e.target.value);$("seconds").textContent=seconds+" ث";
