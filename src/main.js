@@ -87,8 +87,8 @@ function updateSelectedScene(patch){
  const selected=clips.find(scene=>scene.id===selectedSceneId);
  $("selectedSceneName").textContent="المشهد "+selected.id+" — "+selected.text;
  $("time").textContent="00:00 / "+total+" sec";
- setSubtitle(selected.subtitle);
- applySceneCamera(selected);
+ if(Object.hasOwn(patch,"camera"))applySceneCamera(selected);
+ animateScene(selected,0);
 }
 function applySceneCamera(sceneData){
  if(!camera||!controls)return;
