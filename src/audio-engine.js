@@ -18,6 +18,8 @@ export function createSoundEngine() {
   let context;
   let master;
   let destination;
+  let narrationBuffer = null;
+  let narrationSource = null;
 
   function ensureContext() {
     if (!AudioContextClass) throw new Error("Web Audio is not supported by this browser.");
@@ -85,12 +87,43 @@ export function createSoundEngine() {
     }
   }
 
+  function stopNarration() {
+    if (!narrationSource) return;
+    try { narrationSource.stop(); } catch {}
+    narrationSource.disconnect();
+    narrationSource = null;
+  }
+
+  async function loadNarration(file) {
+    ensureContext();
+    if (!file || !file.type.startsWith("audio/")) throw new Error("Choose an audio file such as MP3 or WAV.");
+    const bytes = await file.arrayBuffer();
+    narrationBuffer = await context.decodeAudioData(bytes.slice(0));
+    return narrationBuffer.duration;
+  }
+
+  function playNarration(offset = 0) {
+    if (!context || !narrationBuffer || context.state !== "running") return false;
+    stopNarration();
+    const startAt = Math.max(0, Math.min(Number(offset) || 0, narrationBuffer.duration));
+    if (startAt >= narrationBuffer.duration) return false;
+    narrationSource = context.createBufferSource();
+    narrationSource.buffer = narrationBuffer;
+    narrationSource.connect(master);
+    narrationSource.onended = () => { if (narrationSource) { narrationSource.disconnect(); narrationSource = null; } };
+    narrationSource.start(0, startAt);
+    return true;
+  }
+
   return {
     async start() {
       ensureContext();
       if (context.state !== "running") await context.resume();
     },
     playScene,
+    loadNarration,
+    playNarration,
+    stopNarration,
     getTrack() {
       ensureContext();
       return destination.stream.getAudioTracks()[0] || null;
