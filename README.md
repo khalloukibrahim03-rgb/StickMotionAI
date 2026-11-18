@@ -33,7 +33,14 @@ For a frontend-only preview, run `npm run dev`. Recording will produce a WebM fa
 
 ## Local Piper TTS setup
 
-The TTS button uses the Piper HTTP server running on the same computer as the StickMotion Express server. Install Piper and download a compatible voice model using the official Piper instructions, then start its HTTP server. For the current HTTP server interface, the default endpoint is `http://127.0.0.1:5000/synthesize`.
+The TTS button uses the Piper HTTP server running on the same computer as the StickMotion Express server. With Python installed on Windows, open PowerShell and install Piper's HTTP extra:
+
+```powershell
+py -m pip install "piper-tts[http]"
+py -m piper.http_server -m en_US-ryan-high
+```
+
+Keep that terminal open. The server's default endpoint is `http://127.0.0.1:5000/synthesize`. In a second terminal, start StickMotion with `npm run dev:full`. See the [Piper project](https://github.com/OHF-Voice/piper1-gpl) for current installation and voice-model instructions.
 
 If Piper listens elsewhere, set `PIPER_TTS_URL` before starting the StickMotion server, for example:
 
