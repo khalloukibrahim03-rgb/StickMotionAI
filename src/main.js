@@ -77,7 +77,7 @@ function selectScene(id){
  $("sceneSubtitle").value=selected.subtitle;
  renderSceneList();
  applySceneCamera(selected);
- setSubtitle(selected.subtitle);
+ animateScene(selected,0);
 }
 function updateSelectedScene(patch){
  if(selectedSceneId===null)return;
