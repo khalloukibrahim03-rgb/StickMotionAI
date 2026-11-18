@@ -97,3 +97,14 @@ test("MP4 render endpoint returns a readable error for invalid WebM data", async
   assert.match(payload.error, /MP4 conversion failed/);
   assert.ok(payload.detail);
 });
+
+test("MP4 render endpoint rejects non-WebM uploads with a JSON error", async () => {
+  const form = new FormData();
+  form.append("video", new Blob(["not a WebM upload"], { type: "text/plain" }), "notes.txt");
+  const response = await fetch(`http://127.0.0.1:${apiPort}/api/render/mp4`, {
+    method: "POST",
+    body: form
+  });
+  assert.equal(response.status, 415);
+  assert.match((await response.json()).error, /Upload a WebM video/);
+});
