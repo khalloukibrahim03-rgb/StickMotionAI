@@ -14,7 +14,7 @@ root.innerHTML = '<header><div class="brand">STICKMOTION <b>AI</b><small>CINEMAT
 
 const $ = id => document.getElementById(id);
 const viewport = $("viewport");
-let scene, camera, renderer, controls, actor, arms=[], legs=[], light;
+let scene, camera, renderer, controls, actor, headMesh, arms=[], legs=[], light;
 let clips=[], seconds=6, elapsed=0, total=0, playing=false, recorder, chunks=[], selectedSceneId=null, lastSceneId=null, subtitleContext=null, subtitleTexture=null, soundEngine;
 function makePivot(x,y,len,mat){
  const p=new THREE.Group();p.position.set(x,y,0);
@@ -34,7 +34,7 @@ function init(){
  const concrete=new THREE.MeshStandardMaterial({color:0x252a33,roughness:.95});
  for(let i=0;i<32;i++){const h=5+Math.random()*12,w=2+Math.random()*3;const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,w),concrete);const a=i/32*Math.PI*2,r=10+Math.random()*15;b.position.set(Math.cos(a)*r,h/2,Math.sin(a)*r);b.castShadow=true;b.receiveShadow=true;scene.add(b);}
  actor=new THREE.Group();const black=new THREE.MeshStandardMaterial({color:0x08090d,roughness:.45});const white=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.2});
- const head=new THREE.Mesh(new THREE.SphereGeometry(.34,32,32),white);head.position.y=2.2;head.castShadow=true;actor.add(head);
+ headMesh=new THREE.Mesh(new THREE.SphereGeometry(.34,32,32),white);headMesh.position.y=2.2;headMesh.castShadow=true;actor.add(headMesh);
  const body=new THREE.Mesh(new THREE.CylinderGeometry(.075,.09,.95,18),black);body.position.y=1.43;body.castShadow=true;actor.add(body);
  arms=[makePivot(-.18,1.82,.78,black),makePivot(.18,1.82,.78,black)];
  legs=[makePivot(-.09,.98,.86,black),makePivot(.09,.98,.86,black)];scene.add(actor);
@@ -106,13 +106,27 @@ function applySceneCamera(sceneData){
 }
 function escapeText(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function animateScene(item,t){
- const run=item.motion==="run",walk=item.motion==="walk",shock=item.motion==="shock";
+ const run=item.motion==="run",walk=item.motion==="walk",moving=run||walk,shock=item.motion==="shock";
  const speed=run?13:walk?7:0,amount=run?1:walk?.48:0;
- arms[0].rotation.x=speed?Math.sin(t*speed)*amount:0;arms[1].rotation.x=-arms[0].rotation.x;
+ const duration=Math.max(3,Number(item.duration)||6);
+ const progress=Math.max(0,Math.min(1,t/duration));
+ const stride=speed?Math.sin(t*speed):0;
+ arms[0].rotation.x=stride*amount;arms[1].rotation.x=-arms[0].rotation.x;
  legs[0].rotation.x=-arms[0].rotation.x*.8;legs[1].rotation.x=arms[0].rotation.x*.8;
  arms[0].rotation.z=shock?.9:.12;arms[1].rotation.z=shock?-.9:-.12;
- actor.position.y=run?Math.abs(Math.sin(t*13))*.08:0;
+ // Give walk/run a visible screen-space journey instead of running in place.
+ const travel=(progress-.5)*(run?1.7:walk?.9:0);
+ actor.position.x=travel;
+ actor.position.y=run?Math.abs(Math.sin(t*13))*.1:walk?Math.abs(Math.sin(t*7))*.025:shock?Math.abs(Math.sin(t*3))*.025:0;
  actor.position.z=run?-Math.sin(t*13)*.18:walk?-Math.sin(t*7)*.08:0;
+ actor.rotation.z=shock?.07:run?-.035:walk?-.018:0;
+ headMesh.rotation.z=shock?-.12:Math.sin(t*1.6)*.025;
+ headMesh.rotation.x=shock?-.08:0;
+ // Smoothly track the character while preserving the selected shot size.
+ const cameraBaseX=item.camera==="close"?.4:item.camera==="tracking"?3:4;
+ const follow=item.camera==="close"?.18:item.camera==="tracking"?.42:.2;
+ camera.position.x+=(cameraBaseX+actor.position.x*follow-camera.position.x)*.055;
+ controls.target.x+=(actor.position.x*.35-controls.target.x)*.055;
  if(item.lighting==="blackout"){light.intensity=.08;scene.background.set(0x010208);}
  else if(item.lighting==="warm"){light.intensity=2.8;light.color.set(0xffa65e);scene.background.set(0x17100c);}
  else{light.intensity=2.4;light.color.set(0xffbd86);scene.background.set(0x070a11);}
