@@ -5,6 +5,7 @@ import { buildTimeline, updateScene, setAllDurations, getTimelineDuration, getSc
 import { serializeProject, deserializeProject } from "./project-store.js";
 import { createSoundEngine } from "./audio-engine.js";
 import { buildSrt } from "./subtitle-export.js";
+import { getTextDirection } from "./text-direction.js";
 import { synthesizeSpeech } from "./tts-client.js";
 import "./style.css";
 
@@ -50,7 +51,7 @@ function createSubtitleSprite(){
 function setSubtitle(text){
  if(!subtitleContext)return;
  const ctx=subtitleContext;ctx.clearRect(0,0,1024,160);ctx.fillStyle="rgba(2,5,12,.84)";ctx.fillRect(18,12,988,136);
- ctx.direction="rtl";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#fff";ctx.font="bold 42px Arial";
+ ctx.direction=getTextDirection(text);ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#fff";ctx.font="bold 42px Arial";
  ctx.fillText(String(text||"").slice(0,180),512,80,930);subtitleTexture.needsUpdate=true;
 }
 function resize(){if(!renderer)return;const w=viewport.clientWidth,h=viewport.clientHeight;camera.aspect=w/Math.max(1,h);camera.updateProjectionMatrix();renderer.setSize(w,Math.max(1,h),false);}
