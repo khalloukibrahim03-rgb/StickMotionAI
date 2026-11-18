@@ -18,7 +18,7 @@ Cinematic 3D Stickman Film Studio. Active implementation is on the `development`
 - Express endpoint that converts an uploaded WebM recording into H.264 MP4 using FFmpeg.
 - GitHub Actions workflow that runs unit tests and the Vite production build.
 
-## Run locally
+## Test before publishing\n\nFollow the [hands-on release testing checklist](RELEASE_TESTING.md) to verify preview, narration, subtitles, and the exported MP4 on your computer.\n\n## Run locally
 
 Requirements: Node.js 20 or newer and npm.
 
