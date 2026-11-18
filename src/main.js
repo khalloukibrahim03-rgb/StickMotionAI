@@ -53,7 +53,7 @@ function setSubtitle(text){
  const ctx=subtitleContext;ctx.clearRect(0,0,1024,160);ctx.fillStyle="rgba(2,5,12,.88)";ctx.fillRect(18,12,988,136);
  const value=String(text||"").trim();
  ctx.direction=getTextDirection(value);ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#fff";ctx.font="bold 38px Arial";
- const words=value.split(/\\s+/).filter(Boolean),lines=[];let line="";
+ const words=value.split(/\s+/).filter(Boolean),lines=[];let line="";
  for(const word of words){
   const candidate=line?line+" "+word:word;
   if(line&&ctx.measureText(candidate).width>900){lines.push(line);line=word;}
