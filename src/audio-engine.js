@@ -130,6 +130,9 @@ export function createSoundEngine() {
     loadNarrationBlob,
     playNarration,
     stopNarration,
+    getNarrationDuration() {
+      return narrationBuffer?.duration || 0;
+    },
     getTrack() {
       ensureContext();
       return destination.stream.getAudioTracks()[0] || null;
