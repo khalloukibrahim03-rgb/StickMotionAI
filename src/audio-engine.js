@@ -94,12 +94,17 @@ export function createSoundEngine() {
     narrationSource = null;
   }
 
-  async function loadNarration(file) {
+  async function loadNarrationBlob(blob) {
     ensureContext();
-    if (!file || !file.type.startsWith("audio/")) throw new Error("Choose an audio file such as MP3 or WAV.");
-    const bytes = await file.arrayBuffer();
+    if (!blob || !String(blob.type || "").startsWith("audio/")) throw new Error("Choose an audio file such as MP3 or WAV.");
+    const bytes = await blob.arrayBuffer();
     narrationBuffer = await context.decodeAudioData(bytes.slice(0));
     return narrationBuffer.duration;
+  }
+
+  async function loadNarration(file) {
+    if (!file || !String(file.type || "").startsWith("audio/")) throw new Error("Choose an audio file such as MP3 or WAV.");
+    return loadNarrationBlob(file);
   }
 
   function playNarration(offset = 0) {
@@ -122,6 +127,7 @@ export function createSoundEngine() {
     },
     playScene,
     loadNarration,
+    loadNarrationBlob,
     playNarration,
     stopNarration,
     getTrack() {
