@@ -8,6 +8,7 @@ Cinematic 3D Stickman Film Studio. Active implementation is on the `development`
 - Official Stickman visual direction: white spherical head, black body and limbs.
 - Bilingual script parser and editable scene timeline with per-scene duration, movement, camera, lighting, and subtitle settings.
 - Timeline scrubbing and preview playback; Arabic subtitle text is drawn into the WebGL frame for recording.
+- Export scene-timed subtitles as a standalone UTF-8 SRT file for YouTube or external video editors.
 - Local project save and restore in the browser, including each scene's custom settings.
 - Live camera, lighting, and character animation preview.
 - Procedural scene-synchronized sound effects (footsteps, blackout impact, and shock whoosh), with no background music.
@@ -38,7 +39,7 @@ npm run build
 
 ## Important current limitations
 
-This is an early functional foundation, not a finished AI film studio. Scene parsing is rule-based, not an LLM-powered AI director. The current character and environment are procedural primitives. AI voice generation (TTS) is not implemented: narration must currently be supplied as an MP3/WAV file. Procedural sound effects are illustrative synthesized effects, not recordings from a professional sound library. The narration file is loaded for the current browser session and is not embedded in the saved project. A full keyframe curve editor, cloud-synced projects, and cloud rendering are also not implemented yet.
+This is an early functional foundation, not a finished AI film studio. Scene parsing is rule-based, not an LLM-powered AI director. The current character and environment are procedural primitives. AI voice generation (TTS) is not implemented: narration must currently be supplied as an MP3/WAV file. Procedural sound effects are illustrative synthesized effects, not recordings from a professional sound library. The narration file is loaded for the current browser session and is not embedded in the saved project. SRT export uses the scene subtitle text and scene durations; it does not transcribe narration automatically. A full keyframe curve editor, cloud-synced projects, and cloud rendering are also not implemented yet.
 
 MP4 export is real only when the app can reach the Express render API and FFmpeg successfully converts the recorded WebM. Without that service, the app downloads a WebM preview and clearly reports that MP4 conversion was unavailable. Browser MediaRecorder and WebGL support depend on the browser and device.
 
