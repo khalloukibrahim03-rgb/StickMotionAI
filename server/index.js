@@ -11,7 +11,7 @@ const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 300 * 1024 * 1024 } });
 const PORT = Number(process.env.PORT || 8787);
 
-app.get("/api/health", (_req, res) => res.json({ ok: true, service: "stickmotion-render", ffmpeg: Boolean(ffmpegPath), tts: Boolean(process.env.PIPER_TTS_URL) }));
+app.get("/api/health", (_req, res) => res.json({ ok: true, service: "stickmotion-render", ffmpeg: Boolean(ffmpegPath), ttsEndpoint: process.env.PIPER_TTS_URL || "http://127.0.0.1:5000/synthesize" }));
 
 app.post("/api/tts", express.json({ limit: "64kb" }), async (req, res) => {
   const text = String(req.body?.text || "").trim();
