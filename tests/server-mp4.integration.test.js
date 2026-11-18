@@ -75,3 +75,25 @@ test("MP4 render endpoint transcodes a WebM recording and preserves its audio st
   assert.ok(mp4.length > 1000, "converted MP4 should not be empty");
   assert.equal(mp4.toString("ascii", 4, 8), "ftyp", "output should have an MP4 file-type box");
 });
+
+test("MP4 render endpoint rejects a request without a video upload", async () => {
+  const response = await fetch(`http://127.0.0.1:${apiPort}/api/render/mp4`, {
+    method: "POST",
+    body: new FormData()
+  });
+  assert.equal(response.status, 400);
+  assert.match((await response.json()).error, /Missing recorded video/);
+});
+
+test("MP4 render endpoint returns a readable error for invalid WebM data", async () => {
+  const form = new FormData();
+  form.append("video", new Blob(["not a real video"], { type: "video/webm" }), "broken.webm");
+  const response = await fetch(`http://127.0.0.1:${apiPort}/api/render/mp4`, {
+    method: "POST",
+    body: form
+  });
+  assert.equal(response.status, 500);
+  const payload = await response.json();
+  assert.match(payload.error, /MP4 conversion failed/);
+  assert.ok(payload.detail);
+});
