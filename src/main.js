@@ -226,7 +226,7 @@ async function exportFilm(){
   recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
   recorder.onstop=async()=>{
    playing=false;soundEngine.stopNarration();stream.getTracks().forEach(t=>t.stop());const webm=new Blob(chunks,{type:"video/webm"});
-   if(webm.size<10000){$("progressText").textContent="فشل التسجيل: الملف الناتج فارغ.";$("export").disabled=false;$("preview").disabled=false;recorder=null;return;}
+   if(webm.size<10000){restorePreviewResolution();$("progressText").textContent="فشل التسجيل: الملف الناتج فارغ.";$("export").disabled=false;$("preview").disabled=false;$("preview").textContent="معاينة الفيلم";recorder=null;recordingDuration=0;return;}
    $("progressText").textContent="جاري تحويل التسجيل إلى MP4 عبر FFmpeg…";
    try{const form=new FormData();form.append("video",webm,"film.webm");const response=await fetch("/api/render/mp4",{method:"POST",body:form});if(!response.ok){let detail="خادم FFmpeg غير متاح أو فشل التحويل";try{const payload=await response.json();if(payload.error)detail=payload.error+(payload.detail?" — "+payload.detail:"");}catch{}throw new Error(detail);}const mp4=await response.blob();if(mp4.type!=="video/mp4"||mp4.size<10000)throw new Error("ملف MP4 غير صالح");download(mp4,"StickMotion_Film.mp4");$("progressText").textContent="تم إنشاء وتنزيل MP4 حقيقي.";$("bar").style.width="100%";}
    catch(err){download(webm,"StickMotion_Preview.webm");$("progressText").textContent="تم تنزيل WebM فقط. "+err.message;}
